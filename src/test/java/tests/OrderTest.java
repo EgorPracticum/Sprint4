@@ -18,55 +18,72 @@ public class OrderTest {
     private MainPage mainPage;
     private OrderPage orderPage;
 
-    // Параметры для теста
-    private final String name;
-    private final String surname;
-    private final String address;
-    private final String metro;
-    private final String phone;
-    private final String deliveryDate;
-    private final String rentalPeriod;
-    private final String color;
-    private final String comment;
+    @Parameterized.Parameter
+    public boolean useTopButton;
 
-    public OrderTest(String name, String surname, String address, String metro, String phone,
-                     String deliveryDate, String rentalPeriod, String color, String comment) {
-        this.name = name;
-        this.surname = surname;
-        this.address = address;
-        this.metro = metro;
-        this.phone = phone;
-        this.deliveryDate = deliveryDate;
-        this.rentalPeriod = rentalPeriod;
-        this.color = color;
-        this.comment = comment;
-    }
+    @Parameterized.Parameter(1)
+    public String name;
 
-    @Parameterized.Parameters
+    @Parameterized.Parameter(2)
+    public String surname;
+
+    @Parameterized.Parameter(3)
+    public String address;
+
+    @Parameterized.Parameter(4)
+    public String metro;
+
+    @Parameterized.Parameter(5)
+    public String phone;
+
+    @Parameterized.Parameter(6)
+    public String date;
+
+    @Parameterized.Parameter(7)
+    public String period;
+
+    @Parameterized.Parameter(8)
+    public String color;
+
+    @Parameterized.Parameter(9)
+    public String comment;
+
+    @Parameterized.Parameters(name = "Тест заказа: кнопка={0}, имя={1}")
     public static Object[][] getData() {
         return new Object[][]{
-                {"Иван", "Иванов", "Москва, ул. Ленина, 1", "Черкизовская", "89152002020",
-                        "23.03.2025", "сутки", "black", "Комментарий для курьера"},
-                {"Алла", "Сидорова", "Москва, улица Строителей, 12а, кв.27", "Парк Победы", "84950000101",
-                        "25.03.2025", "двое суток", "grey", "Не звоните, оставьте у двери"}
+                {true, "Иван", "Иванов", "Москва, ул. Ленина, 1", "Черкизовская",
+                        "89152002020", "23.03.2025", "сутки", "black", "Позвоните за час"},
+
+                {false, "Анна", "Петрова", "Москва, ул. Пушкина, 15", "Сокольники",
+                        "89261234567", "25.03.2025", "двое суток", "grey", "Оставить у двери"}
         };
     }
 
     @Before
     public void setUp() {
         driver = new ChromeDriver();
+        driver.manage().window().maximize();
         driver.get("https://qa-scooter.praktikum-services.ru/");
+
         mainPage = new MainPage(driver);
         orderPage = new OrderPage(driver);
+        mainPage.closeCookieBanner();
     }
 
     @Test
-    public void testOrder() {
-        mainPage.clickOrderButtonTop();
+    public void testOrderCreation() {
+        if (useTopButton) {
+            mainPage.clickOrderButtonTop();
+        } else {
+            mainPage.clickOrderButtonBottom();
+        }
+
         orderPage.fillFirstForm(name, surname, address, metro, phone);
-        orderPage.fillSecondForm(deliveryDate, rentalPeriod, color, comment);
-        String successMessage = orderPage.getSuccessMessage();
-        assertEquals("Заказ не оформлен", "Заказ оформлен", successMessage);
+        orderPage.fillSecondForm(date, period, color, comment);
+
+        assertEquals("Не отобразилось сообщение об успешном заказе",
+                "Заказ оформлен",
+                orderPage.getSuccessMessage());
     }
 
     @After
